@@ -61,7 +61,6 @@ import glob
 import shutil
 import hashlib
 import importlib
-import subprocess
 import traceback
 from multiprocessing import Process
 
@@ -80,6 +79,38 @@ from selfdrive.version import version, dirty
 import selfdrive.crash as crash
 
 from selfdrive.loggerd.config import ROOT
+from selfdrive.loggerd.uploader import listdir_by_creation_date
+
+def delete_old_data():
+  # SOLUTION 1
+  # based on rough estimate of 4.5 GB/hr of data, remove an hour's worth of data
+  #BYTES_TO_DELETE = 1000000000 * 4.5   # bytes/GB * GB/hr = bytes/hr
+  #bytes_deleted = 0
+  # get chronologically sorted drive directories
+  #drive_data_dirs = listdir_by_creation_date(ROOT)
+  #abs_path_drive_dirs = [os.path.join(ROOT, drive_dir) for drive_dir in drive_data_dirs]
+
+  #while bytes_deleted < BYTES_TO_DELETE:
+  #  drive_data_dir = abs_path_drive_dirs.pop(0)
+  #  try:
+  #    for file in os.listdir(drive_data_dir):
+  #      bytes_deleted += os.path.getsize(os.path.join(drive_data_dir, file))
+  #    shutil.rmtree(drive_data_dir)
+  #  except Exception:
+  #    cloudlog.warning("Failed to get or delete %s" % file)
+  # SOLUTION 2
+  # keep deleting files until free space is above certain %
+    statvfs = os.statvfs(ROOT)
+    avail = (statvfs.f_bavail * 1.0)/statvfs.f_blocks
+    # keep deleting until have at least 30% free space
+    while avail < 0.3:
+      drive_data_dir = abs_path_drive_dirs.pop(0)
+      try:
+        shutil.rmtree(drive_data_dir)
+      except Exception:
+        cloudlog.warning("Failed to delete %s" % drive_data_dir)
+      statvfs = os.statvfs(ROOT)
+      avail = (statvfs.f_bavail * 1.0)/statvfs.f_blocks
 
 # comment out anything you don't want to run
 managed_processes = {
@@ -329,6 +360,10 @@ def manager_thread():
       kill_managed_process("uploader")
     else:
       start_managed_process("uploader")
+
+    # if less than 20% free space, delete oldest drive data
+    if msg.thermal.freeSpace < 0.2:
+      delete_old_data()
 
     if msg.thermal.freeSpace < 0.05:
       logger_dead = True
