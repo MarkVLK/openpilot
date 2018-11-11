@@ -79,7 +79,7 @@ from selfdrive.version import version, dirty
 import selfdrive.crash as crash
 
 from selfdrive.loggerd.config import ROOT
-from selfdrive.loggerd.uploader import listdir_by_creation_date
+#from selfdrive.loggerd.uploader import listdir_by_creation_date
 
 def delete_old_data():
   # SOLUTION 1
