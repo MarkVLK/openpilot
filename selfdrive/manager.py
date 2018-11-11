@@ -79,16 +79,17 @@ from selfdrive.version import version, dirty
 import selfdrive.crash as crash
 
 from selfdrive.loggerd.config import ROOT
-#from selfdrive.loggerd.uploader import listdir_by_creation_date
+from selfdrive.loggerd.uploader import listdir_by_creation_date
 
 def delete_old_data():
+  # get chronologically sorted drive directories
+  drive_data_dirs = listdir_by_creation_date(ROOT)
+  abs_path_drive_dirs = [os.path.join(ROOT, drive_dir) for drive_dir in drive_data_dirs]
+  
   # SOLUTION 1
   # based on rough estimate of 4.5 GB/hr of data, remove an hour's worth of data
   #BYTES_TO_DELETE = 1000000000 * 4.5   # bytes/GB * GB/hr = bytes/hr
   #bytes_deleted = 0
-  # get chronologically sorted drive directories
-  #drive_data_dirs = listdir_by_creation_date(ROOT)
-  #abs_path_drive_dirs = [os.path.join(ROOT, drive_dir) for drive_dir in drive_data_dirs]
 
   #while bytes_deleted < BYTES_TO_DELETE:
   #  drive_data_dir = abs_path_drive_dirs.pop(0)
